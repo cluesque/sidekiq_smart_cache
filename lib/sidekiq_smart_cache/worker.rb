@@ -15,6 +15,7 @@ module SidekiqSmartCache
       subject = Object.const_get(klass)
       subject = subject.find(instance_id) if instance_id
       result = subject.send(*all_args)
+      raise 'nil results not (yet) supported' if result.nil?
       redis.set(cache_tag, result)
       redis.expire(cache_tag, expires_in)
       redis.send_done_message(cache_tag)
