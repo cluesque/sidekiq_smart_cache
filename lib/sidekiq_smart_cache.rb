@@ -1,0 +1,3 @@
+module SidekiqSmartCache
+  # Your code goes here...
+end
