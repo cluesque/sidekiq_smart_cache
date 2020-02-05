@@ -9,14 +9,15 @@ Gem::Specification.new do |s|
   s.version     = SidekiqSmartCache::VERSION
   s.authors     = ["Bill Kirtley"]
   s.email       = ["bill.kirtley@gmail.com"]
-  s.homepage    = "TODO"
-  s.summary     = "TODO: Summary of SidekiqSmartCache."
-  s.description = "TODO: Description of SidekiqSmartCache."
+  s.homepage    = "https://github.com/cluesque/sidekiq_smart_cache"
+  s.summary     = "Cache objects in redis, generated with thundering herd prevention via sidekiq."
+  s.description = "Cache objects in redis, generated with thundering herd prevention via sidekiq."
   s.license     = "MIT"
 
   s.files = Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
 
-  s.add_dependency "rails", "~> 5.1.6", ">= 5.1.6.2"
+  s.add_dependency "rails", ">= 5.1"
+  s.add_dependency "sidekiq"
 
   s.add_development_dependency "sqlite3"
 end
