@@ -30,7 +30,6 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
   ]
 
   setup do
-    require "sidekiq/launcher"
     Sidekiq.redis = { size: 25 }
     Sidekiq.logger = Rails.logger
     Sidekiq::Testing.disable!
@@ -95,17 +94,17 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
         assert_equal example.answer, example.expect_answer, "Example #{example.label}"
       end
       # assert_equal example.end_time_slice, example.expect_duration
-      assert_in_delta example.end_time, example.start_time + example.expect_duration - 1, time_tolerance,
+      assert_in_delta example.end_time, example.start_time + (example.expect_duration - 1) * CacheExample::TIMESLICE, time_tolerance,
         "Example #{example.label} started #{example.start_time.strftime("%H:%M:%S.%L")} duration #{example.expect_duration} ended #{example.end_time.strftime("%H:%M:%S.%L")}"
     end
   end
 
   test 'timing out' do
-    promise = SidekiqSmartCache::Promise.new(klass: Doohickey, method: :do_a_thing, expires_in: 2.seconds)
+    promise = SidekiqSmartCache::Promise.new(klass: Doohickey, method: :do_a_thing, expires_in: 2.seconds, args: [3.0])
     duration = Benchmark.realtime do
       refute promise.ready_within?(1.second)
     end
-    assert_includes 1.0..2.0, duration, "Should time out after about a second"
+    assert_includes 1.0..3.25, duration, "Should time out after about a second"
     assert promise.timed_out?
   end
 
