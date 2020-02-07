@@ -67,6 +67,27 @@ Rails.configuration.to_prepare do
 end
 ```
 
+## Model mix-in
+
+Let's assume your User class has a active_user_count class method that is expensive to calculate
+
+Declaring `make_class_action_cacheable :active_user_count` will add:
+
+ * `User.active_user_count_without_caching` - always performs the full calculation synchronously, doesn't touch the cache.
+ * `User.refresh_active_user_count` - always performs the full calculation synchronously, populating the cache with the new value.
+ * `User.active_user_count` (the original name) - will now fetch from the cache, only recalculating if the cache is absent or stale.
+ * `User.active_user_count_if_available` will now fetch from the cache but not recalculate, returning nil if the cache is absent or stale.
+ * `User.active_user_count_cache_tag` - the cache tag used to store calculated results. Probably not useful to clients.
+ * `User.active_user_count_promise` - returns a Promise object
+
+Call `promise.fetch(5.seconds)` to wait up to five seconds for a new value, returning nil on timeout.
+
+Call `promise.fetch!(5.seconds)` to wait up to five seconds for a new value, raising `SidekiqSmartCache::TimeoutError` on timeout.
+
+Use <tt>make_instance_action_cacheable</tt> for the equivalent set of instance methods.
+Your models must respond to <tt>to_param</tt> with a unique string suitable for constructing a cache key.
+The class must respond to <tt>find</tt> and return an object that responds to the method.
+
 ## Contributing
 Contribution directions go here.
 

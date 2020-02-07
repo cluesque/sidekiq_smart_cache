@@ -40,6 +40,10 @@ module SidekiqSmartCache
       @_interlock ||= Interlock.new(cache_tag, job_interlock_timeout)
     end
 
+    def perform_now
+      Worker.new.perform(klass, object_param, method, args, cache_tag, expires_in)
+    end
+
     def enqueue_job!
       Worker.perform_async(klass, object_param, method, args, cache_tag, expires_in)
     end
@@ -69,10 +73,10 @@ module SidekiqSmartCache
       else
         log('promise calculator job already working')
       end
+      self # for chaining
     end
 
     def execute_and_wait(timeout, raise_on_timeout: false)
-      return value unless timed_out.nil?
       found_message = existing_value
       if found_message
         # found a previously fresh message
@@ -94,5 +98,9 @@ module SidekiqSmartCache
         end
       end
     end
+
+    alias_method :fetch!, :execute_and_wait!
+    alias_method :fetch, :execute_and_wait
+
   end
 end

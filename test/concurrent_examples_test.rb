@@ -119,4 +119,20 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
     refute promise.timed_out?
   end
 
+  test 'model timeout and then succeed' do
+    doohickey = Doohickey.create!(name: 'fun')
+    promise = doohickey.median_thromboid_density_promise('foo', 'bas', 3.0).start
+    duration = Benchmark.realtime do
+      assert_raises(SidekiqSmartCache::TimeoutError) do
+        promise.fetch!(1.second)
+      end
+    end
+    assert_includes 1.0..2.5, duration, "Should timeout after about a second"
+
+    duration = Benchmark.realtime do
+      assert_equal 'fun foo bas', promise.fetch!(5.seconds)
+    end
+    assert_includes 0.5..2.0, duration, "Should finish after about two seconds" # more leeway for errors adding up
+  end
+
 end

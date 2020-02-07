@@ -1,5 +1,6 @@
 require "sidekiq_smart_cache/worker"
 require "sidekiq_smart_cache/interlock"
+require "sidekiq_smart_cache/model"
 require "sidekiq_smart_cache/promise"
 require "sidekiq_smart_cache/redis"
 

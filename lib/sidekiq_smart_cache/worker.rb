@@ -19,6 +19,7 @@ module SidekiqSmartCache
       redis.set(cache_tag, result)
       redis.expire(cache_tag, expires_in)
       redis.send_done_message(cache_tag)
+      result
     ensure
       # remove the interlock key
       Interlock.new(cache_tag).clear
