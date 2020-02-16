@@ -1,9 +1,11 @@
 module SidekiqSmartCache
   class Promise
     attr_accessor :klass, :object_param, :method, :expires_in, :args, :job_interlock_timeout
-    attr_accessor :timed_out, :value
-    delegate :redis, :log, :cache_prefix, to: SidekiqSmartCache
+    attr_accessor :timed_out
+    delegate :redis, :log, to: SidekiqSmartCache
     delegate :working?, to: :interlock
+    delegate :value, to: :result
+    delegate :created_at, to: :result, prefix: true
 
     def initialize(klass: nil, object: nil, object_param: nil, method:, args: nil,
                    cache_tag: nil, expires_in: 1.hour, job_interlock_timeout: nil)
@@ -27,7 +29,6 @@ module SidekiqSmartCache
     def cache_tag
       @cache_tag ||= begin
         [
-          cache_prefix,
           klass,
           (object_param || '.'),
           method,
@@ -48,12 +49,22 @@ module SidekiqSmartCache
       Worker.perform_async(klass, object_param, method, args, cache_tag, expires_in)
     end
 
-    def execute_and_wait!(timeout)
-      execute_and_wait(timeout, raise_on_timeout: true)
+    def execute_and_wait!(timeout, stale_on_timeout: false)
+      execute_and_wait(timeout, raise_on_timeout: true, stale_on_timeout: stale_on_timeout)
     end
 
-    def existing_value
-      @value ||= redis.get(cache_tag)
+    def result
+      Result.load_from(cache_tag)
+    end
+
+    def stale_value_available?
+      !!result&.stale?
+    end
+
+    def existing_value(allow_stale: false)
+      if((existing = result) && (allow_stale || existing.fresh?))
+        existing.value
+      end
     end
 
     def ready_within?(timeout)
@@ -76,12 +87,12 @@ module SidekiqSmartCache
       self # for chaining
     end
 
-    def execute_and_wait(timeout, raise_on_timeout: false)
-      found_message = existing_value
-      if found_message
+    def execute_and_wait(timeout, raise_on_timeout: false, stale_on_timeout: false)
+      previous_result = result
+      if previous_result&.fresh?
         # found a previously fresh message
         @timed_out = false
-        return found_message
+        return previous_result.value
       else
         start
 
@@ -90,7 +101,10 @@ module SidekiqSmartCache
           # ready now, fetch it
           log('promise calculator job finished')
           @timed_out = false
-          existing_value
+          result.value
+        elsif previous_result && stale_on_timeout
+          log('promise timed out awaiting calculator job, serving stale')
+          previous_result.value
         else
           log('promise timed out awaiting calculator job')
           @timed_out = true
