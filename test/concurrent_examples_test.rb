@@ -135,4 +135,11 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
     assert_includes 0.5..2.0, duration, "Should finish after about two seconds" # more leeway for errors adding up
   end
 
+  test 'wait_for_done_message without exception' do
+    promise = SidekiqSmartCache::Promise.new(klass: Doohickey, method: :take_a_moment, args: [4.0])
+    duration = Benchmark.realtime do
+      assert_nil promise.execute_and_wait(1)
+    end
+    assert_includes 0.5..2.5, duration, "Should finish after about a second"
+  end
 end

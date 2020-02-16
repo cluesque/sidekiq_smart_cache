@@ -6,6 +6,11 @@ class Doohickey < ApplicationRecord
   end
   make_instance_action_cacheable :median_thromboid_density, expires_in: 1.minute
 
+  def self.take_a_moment(duration = 2.0, value = 'done')
+    sleep duration
+    value
+  end
+
   def self.do_a_thing(duration = 2.0)
     doohickey = create(name: "narf #{count + 1}")
     logger.info "Performing #{doohickey.name}"
