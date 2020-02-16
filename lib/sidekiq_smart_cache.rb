@@ -10,6 +10,14 @@ module SidekiqSmartCache
 
   class << self
     attr_accessor :cache_prefix, :redis_pool, :logger, :log_level
+
+    def allowed_classes
+      (@allowed_classes || []) + [Time, Symbol]
+    end
+
+    def allowed_classes=(extra_classes)
+      @allowed_classes = extra_classes
+    end
   end
 
   def self.log(message)

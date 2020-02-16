@@ -3,6 +3,7 @@ require 'test_helper'
 class SidekiqSmartCache::Test < ActiveSupport::TestCase
   setup do
     Sidekiq::Testing.inline!
+    SidekiqSmartCache.redis.flushdb
     @doohickey = Doohickey.create!(name: 'foo bar')
     assert_equal @doohickey.name, 'foo bar'
   end
@@ -46,7 +47,7 @@ class SidekiqSmartCache::Test < ActiveSupport::TestCase
   end
 
   test 'structured result' do
-    structured_answer = {'bar' => 'bas', 'bunk' => { 'bust' => 'bart', 'blah' => 42 } }
+    structured_answer = {'bar' => 'bas', 'bunk' => { 'bust' => 'bart', 'blah' => 42, 'nuthin' => nil } }
     promise = SidekiqSmartCache::Promise.new(klass: Doohickey, method: :take_a_moment, args: [0, structured_answer])
     duration = Benchmark.realtime do
       assert_equal structured_answer, promise.execute_and_wait!(10.seconds)

@@ -1,6 +1,6 @@
 class Result
   class << self
-    delegate :redis, to: SidekiqSmartCache
+    delegate :redis, :allowed_classes, to: SidekiqSmartCache
   end
   attr_accessor :value, :valid_until, :created_at, :cache_prefix
 
@@ -12,20 +12,20 @@ class Result
       cache_prefix: SidekiqSmartCache.cache_prefix
     }
     result_lifetime = 1.month # ??? maybe a function of expires_in ???
-    redis.set(cache_tag, JSON.dump(structure))
-    redis.expire(cache_tag, expires_in)
+    redis.set(cache_tag, structure.to_yaml)
+    redis.expire(cache_tag, result_lifetime)
   end
 
   def self.load_from(cache_tag)
     raw = redis.get(cache_tag)
-    new(JSON.load(raw)) if raw
+    new(YAML.safe_load(raw, allowed_classes)) if raw
   end
 
   def initialize(result)
-    @value = result['value']
-    @created_at = Time.parse(result['created_at'])
-    @valid_until = Time.parse(result['valid_until'])
-    @cache_prefix = result['cache_prefix']
+    @value = result[:value]
+    @created_at = result[:created_at]
+    @valid_until = result[:valid_until]
+    @cache_prefix = result[:cache_prefix]
   end
 
   def fresh?

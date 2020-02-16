@@ -39,7 +39,11 @@ SidekiqSmartCache::Promise.new(
 )
 ```
 
-*Note*: Only string return values are supported.  Complex structures, and importantly nil values must be implemented in client code.
+If your results are (or contain) other than the YAML.safe_load list (TrueClass, FalseClass, NilClass, Numeric, String, Array, Hash) plus Symbol and Time, configure with an initializer:
+
+```
+SidekiqSmartCache.allowed_classes = [MyFavoriteClass]
+```
 
 ## Installation
 Add this line to your application's Gemfile:
