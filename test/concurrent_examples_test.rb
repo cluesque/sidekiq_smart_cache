@@ -44,7 +44,7 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
   end
 
   class CacheExample
-    TIMESLICE = 1
+    TIMESLICE = Doohickey::TIME_UNIT
     FRESH_FOR = (TIMESLICE * 2).seconds
 
     attr_accessor :label, :request_start, :request_timeout, :expect_answer, :expect_duration, :answer
@@ -61,10 +61,10 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
     def start
       @start_time = Time.now
       @thread = Thread.new do
-        sleep (request_start - 1.0) * TIMESLICE
+        sleep (request_start - 1.0) * TIMESLICE # time starts at 1.0, so subtract that
         promise = SidekiqSmartCache::Promise.new(klass: Doohickey, method: :do_a_thing, expires_in: FRESH_FOR)
         begin
-          @answer = promise.execute_and_wait!(request_timeout)
+          @answer = promise.execute_and_wait!(request_timeout * TIMESLICE)
         rescue SidekiqSmartCache::TimeoutError
           @timed_out = true
         end
@@ -111,11 +111,12 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
   test 'asynchronous start' do
     promise = SidekiqSmartCache::Promise.new(klass: Doohickey, method: :do_a_thing, expires_in: 2.seconds)
     promise.start
-    sleep 1.0
+    start_sleep = 1.0
+    sleep start_sleep
     duration = Benchmark.realtime do
-      assert promise.ready_within?(2.seconds)
+      assert promise.ready_within?(Doohickey::DEFAULT_DURATION)
     end
-    assert_includes 1.0..2.0, duration, "Should finish after about a second"
+    assert_in_delta Doohickey::DEFAULT_DURATION, duration + start_sleep, 0.5
     refute promise.timed_out?
   end
 
