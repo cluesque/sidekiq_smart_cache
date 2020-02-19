@@ -14,6 +14,7 @@ module SidekiqSmartCache
     end
 
     def wait_for_done_message(key, timeout)
+      return true if defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?
       if brpop(job_completion_key(key), timeout.to_i)
         # log_msg("got done message for #{key}")
         send_done_message(key) # put it back for any other readers
