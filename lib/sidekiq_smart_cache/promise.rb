@@ -13,7 +13,7 @@ module SidekiqSmartCache
         @klass = object.class.name
         @object_param = object.to_param
       elsif klass
-        @klass = klass
+        @klass = klass.name
         @object_param = object_param
       else
         raise "Must provide either klass or object"
