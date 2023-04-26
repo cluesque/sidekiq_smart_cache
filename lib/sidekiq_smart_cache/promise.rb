@@ -13,13 +13,13 @@ module SidekiqSmartCache
         @klass = object.class.name
         @object_param = object.to_param
       elsif klass
-        @klass = klass.name
+        @klass = klass.to_s
         @object_param = object_param
       else
         raise "Must provide either klass or object"
       end
       raise "Must provide method" unless method
-      @method = method
+      @method = method.to_s
       @expires_in = expires_in.to_i
       @job_interlock_timeout = job_interlock_timeout || @expires_in
       @args = args
