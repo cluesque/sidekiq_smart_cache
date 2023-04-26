@@ -9,16 +9,21 @@ module SidekiqSmartCache
     end
 
     def send_done_message(key)
-      lpush(job_completion_key(key), 'done')
-      expire(job_completion_key(key), 1)
+      Sidekiq.redis {|r| r.lpush(job_completion_key(key), 'done') }
+      Sidekiq.redis {|r| r.expire(job_completion_key(key), 1) }
     end
 
     def wait_for_done_message(key, timeout)
       return true if defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?
-      if brpop(job_completion_key(key), timeout.to_i)
-        # log_msg("got done message for #{key}")
-        send_done_message(key) # put it back for any other readers
-        true
+
+      begin
+        if Sidekiq.redis { |r| r.blocking_call(timeout.to_i, "BRPOP", job_completion_key(key), 0) }
+          log_msg("got done message for #{key}")
+          send_done_message(key) # put it back for any other readers
+          true
+        end
+      rescue RedisClient::ReadTimeoutError => ex
+        false
       end
     end
 

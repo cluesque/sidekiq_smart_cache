@@ -36,6 +36,7 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
 
     SidekiqSmartCache.redis.flushdb
     @launcher = Sidekiq::Launcher.new(Sidekiq.options.merge(queues: ['default']));0
+    Sidekiq.redis(&:flushdb)
     @launcher.run
   end
 

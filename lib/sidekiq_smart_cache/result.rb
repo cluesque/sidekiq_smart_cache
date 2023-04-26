@@ -11,13 +11,13 @@ class Result
       valid_until: Time.now + expires_in,
       cache_prefix: SidekiqSmartCache.cache_prefix
     }
-    result_lifetime = 1.month # ??? maybe a function of expires_in ???
-    redis.set(cache_tag, structure.to_yaml)
-    redis.expire(cache_tag, result_lifetime)
+    result_lifetime = 1.month.to_i # ??? maybe a function of expires_in ???
+    Sidekiq.redis { |r| r.call("SET", cache_tag, structure.to_yaml) }
+    Sidekiq.redis { |r| r.call("EXPIRE", cache_tag, result_lifetime) }
   end
 
   def self.load_from(cache_tag)
-    raw = redis.get(cache_tag)
+    raw = Sidekiq.redis { |r| r.call("GET", cache_tag) }
     new(YAML.safe_load(raw, allowed_classes)) if raw
   end
 
