@@ -18,7 +18,7 @@ class Result
 
   def self.load_from(cache_tag)
     raw = Sidekiq.redis { |r| r.call("GET", cache_tag) }
-    new(YAML.safe_load(raw, allowed_classes)) if raw
+    new(YAML.safe_load(raw,  permitted_classes: allowed_classes)) if raw
   end
 
   def initialize(result)
