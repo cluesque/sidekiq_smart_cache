@@ -62,7 +62,7 @@ module SidekiqSmartCache
     end
 
     def existing_value(allow_stale: false)
-      if((existing = result) && (allow_stale || existing.fresh?))
+      if (existing = result) && (allow_stale || existing.fresh?)
         existing.value
       end
     end

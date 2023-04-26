@@ -95,7 +95,7 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
         assert_nil example.answer, "Example #{example.label} expected no answer, got #{example.answer}"
       else
         time_tolerance = 0.5 # actual invocation time more precise
-        assert_equal example.answer, example.expect_answer, "Example #{example.label}"
+        assert_equal example.expect_answer, example.answer, "Example #{example.label}"
       end
       # assert_equal example.end_time_slice, example.expect_duration
       assert_in_delta example.end_time, example.start_time + (example.expect_duration - 1) * CacheExample::TIMESLICE, time_tolerance,
