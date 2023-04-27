@@ -137,7 +137,7 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
     duration = Benchmark.realtime do
       assert_equal 'fun foo bas', promise.fetch!(5.seconds)
     end
-    assert_includes 0.5..2.1, duration, "Should finish after about two seconds" # more leeway for errors adding up
+    assert_includes 0.5..2.0, duration, "Should finish after about two seconds" # more leeway for errors adding up
   end
 
   test 'wait_for_done_message without exception' do

@@ -9,21 +9,16 @@ module SidekiqSmartCache
     end
 
     def send_done_message(key)
-      Sidekiq.redis {|r| r.lpush(job_completion_key(key), 'done') }
-      Sidekiq.redis {|r| r.expire(job_completion_key(key), 1) }
+      call("LPUSH", job_completion_key(key), 'done')
+      call("EXPIRE", job_completion_key(key), 1)
     end
 
     def wait_for_done_message(key, timeout)
       return true if defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?
-
-      begin
-        if Sidekiq.redis { |r| r.blocking_call(timeout.to_i, "BRPOP", job_completion_key(key), 0) }
-          log_msg("got done message for #{key}")
-          send_done_message(key) # put it back for any other readers
-          true
-        end
-      rescue RedisClient::ReadTimeoutError => ex
-        false
+      if blocking_call(timeout.to_i, "BRPOP", job_completion_key(key), 0)
+        log_msg("got done message for #{key}")
+        send_done_message(key) # put it back for any other readers
+        true
       end
     end
 
@@ -42,8 +37,9 @@ module SidekiqSmartCache
             # r.send(name, *args)a.tap do |val|
             #   log_msg("#{name} #{args} -> #{val}")
             # end
-          # stolen from sidekiq - Thanks Mike!
-        rescue ::Redis::CommandError => ex
+            # stolen from sidekiq - Thanks Mike!
+          rescue ::RedisClient::TimeoutError
+          rescue ::RedisClient::CommandError => ex
             # 2550 Failover can cause the server to become a replica, need
             # to disconnect and reopen the socket to get back to the primary.
             if retryable && ex.message =~ /READONLY/
