@@ -3,7 +3,7 @@ require 'test_helper'
 class ModelTest < ActiveSupport::TestCase
   setup do
     Sidekiq::Testing.inline!
-    Sidekiq.redis(&:flushdb)
+    SidekiqSmartCache.redis.call("FLUSHDB")
     @doohickey = Doohickey.create!(name: 'foo bar')
     assert_equal @doohickey.name, 'foo bar'
   end
