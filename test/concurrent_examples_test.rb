@@ -38,7 +38,7 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
 
     Sidekiq::Testing.disable!
 
-    SidekiqSmartCache.redis.call("FLUSHDB")
+    SidekiqSmartCache.redis.flushdb
     @launcher = Sidekiq::Launcher.new(Sidekiq.default_configuration);0
     @launcher.run
   end

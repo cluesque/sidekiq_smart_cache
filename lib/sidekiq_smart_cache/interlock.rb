@@ -13,15 +13,15 @@ module SidekiqSmartCache
     end
 
     def working?
-      redis.call("GET", key)
+      redis.get(key)
     end
 
     def lock_job?
-      redis.call("SET", key, 'winner!', nx: true) && redis.call("EXPIRE", key, job_interlock_timeout)
+      redis.set(key, 'winner!', nx: true) && redis.expire(key, job_interlock_timeout)
     end
 
     def clear
-      redis.call("DEL", key)
+      redis.del(key)
     end
   end
 end

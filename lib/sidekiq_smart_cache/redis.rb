@@ -1,4 +1,6 @@
 module SidekiqSmartCache
+  COMMANDS = [:get, :set, :lpush, :expire, :brpop, :flushdb, :del]
+
   class Redis
     def initialize(pool)
       @pool = pool
@@ -9,13 +11,14 @@ module SidekiqSmartCache
     end
 
     def send_done_message(key)
-      call("LPUSH", job_completion_key(key), 'done')
-      call("EXPIRE", job_completion_key(key), 1)
+      lpush(job_completion_key(key), 'done')
+      expire(job_completion_key(key), 1)
     end
 
     def wait_for_done_message(key, timeout)
       return true if defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?
-      if blocking_call(timeout.to_i, "BRPOP", job_completion_key(key), 0)
+
+      if brpop(job_completion_key(key), timeout.to_i)
         #log_msg("got done message for #{key}")
         send_done_message(key) # put it back for any other readers
         true
@@ -28,11 +31,15 @@ module SidekiqSmartCache
 
     def method_missing(name, *args)
       @pool.with do |r|
-        if r.respond_to?(name)
+        if COMMANDS.include? name
           retryable = true
           begin
             # log_msg("#{name} #{args}")
-            r.send(name, *args)
+            if name == :brpop
+              r.blocking_call(args[1], name.to_s.upcase, args[0], 0)
+            else
+              r.call(name.to_s.upcase, *args)
+            end
             # WIP simplify to the above when not logging
             # r.send(name, *args)a.tap do |val|
             #   log_msg("#{name} #{args} -> #{val}")
