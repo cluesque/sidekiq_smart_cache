@@ -10,10 +10,10 @@ module SidekiqSmartCache
     def initialize(klass: nil, object: nil, object_param: nil, method:, args: nil,
                    cache_tag: nil, expires_in: 1.hour, job_interlock_timeout: nil)
       if object
-        @klass = object.class.name
+        @klass = object.class.to_s
         @object_param = object.to_param
       elsif klass
-        @klass = klass.name
+        @klass = klass.to_s
         @object_param = object_param
       else
         raise "Must provide either klass or object"
