@@ -1,4 +1,13 @@
 module SidekiqSmartCache
+  BLOCKING_COMMANDS = %i[ brpop ].freeze
+  COMMANDS = BLOCKING_COMMANDS + %i[ get set lpush expire flushdb del ].freeze
+
+  ERROR_TO_CATCH = if defined?(::RedisClient)
+    ::RedisClient::CommandError
+  else
+    ::Redis::CommandError
+  end
+
   class Redis
     def initialize(pool)
       @pool = pool
@@ -15,6 +24,7 @@ module SidekiqSmartCache
 
     def wait_for_done_message(key, timeout)
       return true if defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?
+
       if brpop(job_completion_key(key), timeout.to_i)
         # log_msg("got done message for #{key}")
         send_done_message(key) # put it back for any other readers
@@ -28,17 +38,30 @@ module SidekiqSmartCache
 
     def method_missing(name, *args)
       @pool.with do |r|
-        if r.respond_to?(name)
+        if COMMANDS.include? name
           retryable = true
           begin
             # log_msg("#{name} #{args}")
-            r.send(name, *args)
+            if r.respond_to?(name)
+              # old redis gem implements methods including `brpop` and `flusdb`
+              r.send(name, *args)
+            elsif BLOCKING_COMMANDS.include? name
+              # support redis-client semantics
+              begin
+                r.blocking_call(args[1], name.to_s.upcase, args[0], 0)
+              rescue ::RedisClient::TimeoutError
+                nil # quietly return nil in this case
+              end
+            else
+              r.call(name.to_s.upcase, *args)
+            end
             # WIP simplify to the above when not logging
             # r.send(name, *args)a.tap do |val|
             #   log_msg("#{name} #{args} -> #{val}")
             # end
-          # stolen from sidekiq - Thanks Mike!
-        rescue ::Redis::CommandError => ex
+            # stolen from sidekiq - Thanks Mike!
+            # Quietly consume this one and return nil
+          rescue ERROR_TO_CATCH => ex
             # 2550 Failover can cause the server to become a replica, need
             # to disconnect and reopen the socket to get back to the primary.
             if retryable && ex.message =~ /READONLY/

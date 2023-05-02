@@ -17,7 +17,7 @@ module SidekiqSmartCache
     end
 
     def lock_job?
-      redis.setnx(key, 'winner!') && redis.expire(key, job_interlock_timeout)
+      redis.set(key, 'winner!', nx: true) && redis.expire(key, job_interlock_timeout)
     end
 
     def clear

@@ -30,12 +30,21 @@ class ConcurrentExamplesTest < ActiveSupport::TestCase
   ]
 
   setup do
-    Sidekiq.redis = { size: 25 }
-    Sidekiq.logger = Rails.logger
+    Sidekiq.configure_client do |cfg|
+      cfg.logger = Rails.logger
+      cfg.redis = { size: 25 }
+      cfg.queues = ['default'] if cfg.respond_to?(:queues) # sidekiq >= 7
+    end
     Sidekiq::Testing.disable!
 
     SidekiqSmartCache.redis.flushdb
-    @launcher = Sidekiq::Launcher.new(Sidekiq.options.merge(queues: ['default']));0
+    config = if Sidekiq.respond_to?(:options)
+      # Sidekiq < 7 compatibility
+      Sidekiq.options.merge(queues: ['default'])
+    else
+      Sidekiq.default_configuration
+    end
+    @launcher = Sidekiq::Launcher.new(config)
     @launcher.run
   end
 
