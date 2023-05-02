@@ -26,7 +26,7 @@ module SidekiqSmartCache
       return true if defined?(Sidekiq::Testing) && Sidekiq::Testing.inline?
 
       if brpop(job_completion_key(key), timeout: timeout.to_i)
-          # log_msg("got done message for #{key}")
+        # log_msg("got done message for #{key}")
         send_done_message(key) # put it back for any other readers
         true
       end
@@ -36,7 +36,7 @@ module SidekiqSmartCache
       Rails.logger.info("#{Time.now.iso8601(3)} #{Thread.current[:name]} redis #{msg}")
     end
 
-    def method_missing(name, *args)
+    def method_missing(name, ...)
       @pool.with do |r|
         if COMMANDS.include? name
           retryable = true
@@ -44,21 +44,13 @@ module SidekiqSmartCache
             # log_msg("#{name} #{args}")
             if r.respond_to?(name)
               # old redis gem implements methods including `brpop` and `flusdb`
-              r.send(name, *args)
+              r.send(name, ...)
             elsif BLOCKING_COMMANDS.include? name
               # support redis-client semantics
-              begin
-                r.blocking_call(args[1], name.to_s.upcase, args[0], 0)
-              rescue ::RedisClient::TimeoutError
-                nil # quietly return nil in this case
-              end
+              make_blocking_call(r, name, ...)
             else
-              r.call(name.to_s.upcase, *args)
+              r.call(name.to_s.upcase, ...)
             end
-            # WIP simplify to the above when not logging
-            # r.send(name, *args)a.tap do |val|
-            #   log_msg("#{name} #{args} -> #{val}")
-            # end
             # stolen from sidekiq - Thanks Mike!
             # Quietly consume this one and return nil
           rescue ERROR_TO_CATCH => ex
@@ -75,6 +67,28 @@ module SidekiqSmartCache
           super
         end
       end
+    end
+
+    def make_blocking_call(r, name, *args)
+      # The Redis `brpop` implementation seems to allow timeout to be the last argument
+      # or a key in a hash `timeout: 5`, so:
+      # `r.brpop('key1', 'key2', 5)` - wait five seconds for either queue
+      # `r.brpop('key1', 'key2', timeout: 5)` - same
+      # `r.brpop('key1', 'key2')` - wait forever on either queue
+      timeout = if args.last.is_a?(Hash)
+        options = args.pop
+        options[:timeout]
+      else
+        args.pop
+      end
+
+      # With RedisClient, the doc is a little thin, but it looks like we want to start with the timeout
+      # then the verb, then the array of keys
+      # and end with ... a 0?
+      blocking_call_args = [timeout, name.to_s.upcase] + args + [0]
+      r.blocking_call(*blocking_call_args)
+    rescue ::RedisClient::TimeoutError
+      nil # quietly return nil in this case
     end
   end
 end
