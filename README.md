@@ -92,6 +92,31 @@ Use <tt>make_instance_action_cacheable</tt> for the equivalent set of instance m
 Your models must respond to <tt>to_param</tt> with a unique string suitable for constructing a cache key.
 The class must respond to <tt>find</tt> and return an object that responds to the method.
 
+## Testing
+
+# Setup
+```
+bundle install
+pushd test/dummy
+bundle exec rake db:create db:migrate db:test:prepare
+popd
+bundle exec bin/test
+```
+# Tidy
+
+The test database is using sqlite, so `rm test/dummy/db/*.sqlite3` is a sincere way to reset context.
+
+# Debugging
+Test a single file:
+```
+bin/test test/model_test.rb
+```
+
+Open a SQL shell on a database:
+```
+sqlite3 test/dummy/db/test.sqlite3
+```
+
 ## Contributing
 Contribution directions go here.
 
