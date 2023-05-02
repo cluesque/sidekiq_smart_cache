@@ -5,6 +5,9 @@ require "sidekiq"
 require 'sidekiq/testing'
 require 'sidekiq/launcher'
 
+
+puts "Testing against Sidekiq #{Sidekiq::VERSION}"
+
 require File.expand_path("../../test/dummy/config/environment.rb", __FILE__)
 ActiveRecord::Migrator.migrations_paths = [File.expand_path("../../test/dummy/db/migrate", __FILE__)]
 require "rails/test_help"
