@@ -60,7 +60,7 @@ module SidekiqSmartCache::Model
         else
           promise_args[:klass] = self.name
         end
-        SidekiqSmartCache::Promise.new(promise_args)
+        SidekiqSmartCache::Promise.new(**promise_args)
       end
 
       if_available_method = ->(*args) do
