@@ -109,12 +109,22 @@ The test database is using sqlite, so `rm test/dummy/db/*.sqlite3` is a sincere 
 # Debugging
 Test a single file:
 ```
-bin/test test/model_test.rb
+bin/test test/model_test.rb -n test_cache_tag_generation
 ```
 
 Open a SQL shell on a database:
 ```
 sqlite3 test/dummy/db/test.sqlite3
+```
+
+Test with a specific Sidekiq version:
+```
+BUNDLE_GEMFILE=gemfiles/Gemfile-sidekiq7 bundle exec bin/test
+```
+
+Specify a non-default redis for both sidekiq and the cache:
+```
+REDIS_PROVIDER=REDIS_URL REDIS_URL=redis://localhost:6380 BUNDLE_GEMFILE=gemfiles/Gemfile-sidekiq7 bundle exec bin/test
 ```
 
 ## Contributing

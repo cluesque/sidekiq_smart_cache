@@ -11,7 +11,7 @@ class Result
       valid_until: Time.now + expires_in,
       cache_prefix: SidekiqSmartCache.cache_prefix
     }
-    result_lifetime = 1.month # ??? maybe a function of expires_in ???
+    result_lifetime = 1.month.to_i # ??? maybe a function of expires_in ???
     redis.set(cache_tag, structure.to_yaml)
     redis.expire(cache_tag, result_lifetime)
   end

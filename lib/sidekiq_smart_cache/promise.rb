@@ -19,7 +19,7 @@ module SidekiqSmartCache
         raise "Must provide either klass or object"
       end
       raise "Must provide method" unless method
-      @method = method
+      @method = method.to_s
       @expires_in = expires_in.to_i
       @job_interlock_timeout = job_interlock_timeout || @expires_in
       @args = args
