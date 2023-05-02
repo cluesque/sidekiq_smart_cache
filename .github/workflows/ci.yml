@@ -4,7 +4,13 @@ on: [push, pull_request]
 jobs:
   test:
     name: Run Tests
+    strategy:
+      fail-fast: false
+      matrix:
+        gemfile: [ sidekiq6, sidekiq7 ]
     runs-on: ubuntu-latest
+    env: # $BUNDLE_GEMFILE must be set at the job level, so it is set for all steps
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/Gemfile-${{ matrix.gemfile }}
 
     services:
       redis:

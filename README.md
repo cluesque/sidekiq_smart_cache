@@ -119,12 +119,12 @@ sqlite3 test/dummy/db/test.sqlite3
 
 Test with a specific Sidekiq version:
 ```
-BUNDLE_GEMFILE=Gemfile-sidekiq7 bundle exec bin/test
+BUNDLE_GEMFILE=gemfiles/Gemfile-sidekiq7 bundle exec bin/test
 ```
 
 Specify a non-default redis for both sidekiq and the cache:
 ```
-REDIS_PROVIDER=REDIS_URL REDIS_URL=redis://localhost:6380 BUNDLE_GEMFILE=Gemfile-sidekiq7 bundle exec bin/test
+REDIS_PROVIDER=REDIS_URL REDIS_URL=redis://localhost:6380 BUNDLE_GEMFILE=gemfiles/Gemfile-sidekiq7 bundle exec bin/test
 ```
 
 ## Contributing
