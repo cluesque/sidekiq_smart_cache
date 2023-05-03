@@ -10,5 +10,10 @@ gemspec
 # Git. Remember to move these dependencies to your gemspec before releasing
 # your gem to rubygems.org.
 
-# To use a debugger
-gem 'pry', group: [:development, :test]
+group :development, :test do
+  gem 'activerecord', '~> 6.0.6', '>= 6.0.6.1'
+  gem 'railties', '~> 6.0.6', '>= 6.0.6.1'
+
+  # To use a debugger
+  gem 'pry'
+end
