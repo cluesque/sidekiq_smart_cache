@@ -11,8 +11,8 @@ gemspec
 # your gem to rubygems.org.
 
 group :development, :test do
-  gem 'activerecord', '~> 6.0.6', '>= 6.0.6.1'
-  gem 'railties', '~> 6.0.6', '>= 6.0.6.1'
+  gem 'activerecord', '~> 6.1', '>= 6.1'
+  gem 'railties', '~> 6.1', '>= 6.1'
 
   # To use a debugger
   gem 'pry'
