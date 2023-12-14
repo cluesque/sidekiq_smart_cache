@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         sidekiq: [ sidekiq6, sidekiq7, sidekiq7.2 ]
-        ruby: [ 2.7.5, 3.0.3 ]
+        ruby: [ 2.7.5, 3.0.3, 3.2.0 ]
     runs-on: ubuntu-latest
     env: # $BUNDLE_GEMFILE must be set at the job level, so it is set for all steps
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/Gemfile-${{ matrix.sidekiq }}
